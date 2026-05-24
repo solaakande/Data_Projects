@@ -1,10 +1,10 @@
 # Vehicle Database System Design and Implementation
 
 ## Overview
-This project focuses on designing and implementing a database system for a car manufacturing and distribution company.  
-The system supports both direct customer sales (B2C) and dealer-based sales (B2B), as well as vehicle servicing operations.
+This project involves designing and implementing a database system for a car manufacturing and distribution company.  
+The system supports both customer sales (B2C) and dealer-based sales (B2B), as well as vehicle servicing operations.
 
-The goal was to model real-world business processes and translate them into a structured relational database.
+This was a group project where we worked together to model and implement a structured database based on real-world business processes.
 
 ## Key Features
 - Supports both customer and dealer orders  
@@ -12,13 +12,12 @@ The goal was to model real-world business processes and translate them into a st
 - Assigns salespersons to regions and orders  
 - Handles many-to-many relationships between orders and vehicles  
 
-## What I Did
-- Defined business rules based on the company’s operations  
-- Designed an Entity-Relationship (ER) model  
-- Converted the ER model into a relational schema  
-- Applied normalisation (up to 2NF) to improve data integrity  
-- Implemented the database using SQL (DDL + insert statements)  
-- Wrote queries to retrieve and analyse data  
+## What I Worked On
+- Contributed to defining business rules and system requirements  
+- Helped design the Entity-Relationship (ER) model  
+- Worked on database normalisation and schema design  
+- Participated in SQL implementation (table creation and data insertion)  
+- Assisted with writing and testing SQL queries  
 
 ## Database Design
 - Entities include:
@@ -30,7 +29,7 @@ The goal was to model real-world business processes and translate them into a st
   - Salesperson  
   - Region  
 
-- A junction table (`vehicle_order`) was used to handle the many-to-many relationship between orders and vehicles   
+- A junction table (`vehicle_order`) was used to manage the many-to-many relationship between orders and vehicles  
 
 ## Key Concepts Applied
 - Entity-Relationship modelling  
@@ -39,19 +38,12 @@ The goal was to model real-world business processes and translate them into a st
 - Referential integrity  
 - SQL queries and joins  
 
-## Security and Integrity
-- Role-based access control for user permissions  
-- Referential integrity using foreign keys  
-- Data validation and constraints  
-- Consideration of privacy, GDPR, and ethical data use [1](https://livewlvac-my.sharepoint.com/personal/s_m_akande_wlv_ac_uk)_%202417206.pdf)  
-
 ## Limitations
-- Simplified dataset for modeling purposes  
-- No real-time system or user interface  
-- Focused on structure rather than scalability  
+- Simplified system for academic purposes  
+- No user interface or real-time system  
 
 ## How to Use
-Run the SQL scripts in a database environment (e.g. Oracle LiveSQL) to create tables and insert data.
+Run the SQL scripts in a database environment (e.g. Oracle LiveSQL).
 
 ```bash
 git clone https://github.com/solaakande/Data_Projects.git
