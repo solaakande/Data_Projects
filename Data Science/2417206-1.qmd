@@ -1,0 +1,195 @@
+---
+title: "2417206"
+author: "Solagbade Akande"
+format: 
+  html:
+    css: custom-style.css
+    code-fold: true
+    code-link: true
+    embed-resources: true
+    toc: true
+    number-sections: true
+bibliography: references.bib
+---
+
+## **Introduction**
+
+This report explores the demographic factors influencing income stability, using statistical analysis and visualizations to uncover key insights. By focusing on variables such as age, marital status, gender, ethnicity, and education, the report aims to reveal how these elements interact and contribute to variations in income levels. The analysis leverages tools and techniques outlined in the module's lecture notes [@parkes2024], ensuring that the investigation aligns with the principles and methodologies discussed in class. This approach provides a comprehensive overview of the patterns within the data and highlights significant relationships that can inform further research or strategic planning.
+
+## **Data Overview and Methodology**
+
+The dataset for this analysis is a snapshot of the 2021 England census, containing 27,410 entries with key columns such as Age, Mar_Stat, INC, Female, Ethnicity, and Highest Ed[@source2021]. The analysis is conducted in RStudio, using Quarto and ggplot2 for visualization, with dplyr and stringr for data processing.
+
+### Loading, Cleaning and Transforming the Data
+
+The data set will be cleaned by renaming columns, re-coding education levels, creating new columns, and filtering out rows with missing values before selecting relevant columns for analysis. [@wickham2023]
+
+```{r data-cleaning-and-prep, message = FALSE, warning = FALSE}
+#| echo: false
+#| include: false
+
+# Load essential packages for data manipulation, string handling, visualization, code linking, and XML parsing.
+library(dplyr); library(stringr); library(ggplot2); library(downlit); library(xml2)
+
+# Load and clean dataset
+the_data <- read.csv("data.csv") |> 
+  rename(Age = Age, Marital_Status = Mar_Stat, Annual_Income = INC,
+         Gender_Female = Female, Ethnicity = Eth, Education_Level = Highest.Ed) |> 
+  mutate(
+    Education_Level = recode(str_trim(Education_Level),
+                             "Bachelors Degree" = "Bachelors",
+                             "Less than Secondary School" = "Below Secondary",
+                             "Masters or higher" = "Masters+",
+                             "Secondary School" = "Secondary",
+                             "Some HE" = "Some College"),
+    Gender = ifelse(Gender_Female == 1, "Male", ifelse(Gender_Female == 0, "Female", "Other"))) |> 
+  relocate(Gender, .after = Gender_Female) |> 
+  filter(!is.na(Marital_Status), !is.na(Annual_Income)) |> 
+  select(Age, Marital_Status, Annual_Income, Gender, Ethnicity, Education_Level)
+head(the_data) # Display cleaned dataset
+```
+
+## **Analytical Questions and Insights**
+
+With the transformed data set, we can explore questions to uncover socioeconomic patterns and the impact of demographics on income.
+
+### Does education level unlock greater earning potential?
+
+We begin by examining a common assumption: Higher education levels correlate with higher income. Let’s investigate whether this holds true in this data set.
+
+```{r education-income-summary, message = FALSE, warning = FALSE}
+#| echo: false
+#| include: true
+# Convert categorical columns to factors
+the_data <- the_data %>%
+  mutate(Education_Level = as.factor(Education_Level))
+
+# Calculate income statistics for each education level
+education_income_summary <- the_data %>%
+  group_by(Education_Level) %>%
+  summarise(mean_income = mean(Annual_Income, na.rm = TRUE),
+            median_income = median(Annual_Income, na.rm = TRUE),
+            income_sd = sd(Annual_Income, na.rm = TRUE), count = n())
+```
+
+```{r income-boxplot-by-education, message = FALSE, warning = FALSE}
+#| echo: true
+#| include: true
+# This report will use variations of the code below to create visualizations with the `ggplot` package in R, supporting plot types like box plots, scatter plots, and bar charts.
+ggplot(the_data, aes(x = Education_Level, y = Annual_Income, fill = Education_Level)) +
+  geom_boxplot(alpha = 0.6, outlier.shape = 1) +
+  scale_fill_manual(values = c(
+    "Bachelors" = "dodgerblue", "Below Secondary" = "coral", 
+    "Masters+" = "darkgreen", "Secondary" = "purple", "Some College" = "gold")) +
+  labs(title = "Annual Income by Education Level",
+       x = "Education Level", y = "Annual Income (GBP)") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle =45, hjust =1), legend.position= "none" )+
+  scale_y_continuous(limits = c(0, 200000), breaks = seq(0, 200000, by = 50000),
+                     labels = scales::dollar_format(prefix = "£"))
+```
+
+The box plot displays income distributions by education level, where higher education, such as "Master's or higher" and "Bachelor's Degree," shows broader spreads extending into higher income ranges, indicating greater earning potential. Individual data points in the box plot highlights income variability within each level. Next, we explore whether these educational benefits are equally shared across genders.
+
+### Do Men and Women with Similar Education Earn Equally?
+
+Here, we compare income by education level for men and women. If education is a key driver of income, we might expect similar earnings patterns for both genders.
+
+```{r income-by-education-gender, message = FALSE, warning = FALSE}
+#| echo: false
+#| include: true
+# Calculate average income by education level and gender
+education_gender_income <- the_data |>
+  group_by(Education_Level, Gender) |>
+  summarize(avg_income = mean(Annual_Income, na.rm = TRUE), .groups = "drop")
+
+# Plot average income by education level, split by gender
+ggplot(education_gender_income, aes(x = Education_Level, y = avg_income, fill = Gender)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Average Annual Income by Education and Gender",
+    x = "Education Level", y = "Average Annual Income", fill = "Gender") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+  plot.title = element_text(size = 14)) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "£"))
+```
+
+The bar chart highlights that females consistently earn more than males, particularly at the “Masters+” level. This suggests the need to explore socio-economic factors contributing to this unique trend, and leads us to a broader question: Do women in this population generally earn more than men?
+
+### Do Women Earn More than Men Overall?
+
+Calculating the overall average income for both genders will show if women generally earn more than men beyond just specific education levels.
+
+```{r overall-gender-income-analysis, message = FALSE, warning = FALSE}
+#| echo: false
+#| include: true
+# Calculate overall average income by  gender
+overall_gender_income <- the_data |>
+  group_by(Gender) |>
+  summarize(avg_income = mean(Annual_Income, na.rm = TRUE), .groups = "drop")
+
+# Plot income trends by age, split by gender
+ggplot(overall_gender_income, aes(x = avg_income, y = Gender, fill = Gender)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Overall Average Annual Income by Gender",
+    x = "Average Annual Income", y = "Gender") +
+  theme_minimal(base_size = 14) + theme(legend.position = "none",
+  plot.title = element_text(size = 14)) +
+  scale_x_continuous(labels = scales::dollar_format(prefix = "£")) +
+  scale_fill_brewer(palette = "Dark2")
+```
+
+The visualization shows that women, on average, earn more than men in this data set, an unusual trend compared to typical income patterns. This finding suggests further exploration into socio-economic factors contributing to this reversal.
+
+### Which Factor Most Influences High Pay Observed for Women?
+
+Building on the finding that women generally earn more than men in this data set, we now investigate which specific factor—such as education level, age, marital status or ethnicity — has the greatest influence on women’s higher earnings. By identifying the most impactful factor, we can begin to understand what might contribute to women’s income advantage.
+
+```{r max-mean-income-impact-factors, message = FALSE, warning=FALSE}
+#| echo: false
+#| include: true
+# Function to calculate max mean income impact for given factors
+calculate_impact <- function(factor) {
+  the_data %>% filter(Gender == 'Female') %>% group_by(across(all_of(factor))) %>%
+    summarise(Mean_Impact = mean(Annual_Income, na.rm = TRUE)) %>%
+    summarise(Max_Impact = max(Mean_Impact, na.rm = TRUE))}
+
+# Apply function to factors and create summary
+factors <- c("Education_Level", "Age", "Marital_Status", "Ethnicity")
+factor_summary <- lapply(setNames(factors, factors), calculate_impact) %>%
+  bind_rows(.id = "Factors") %>% arrange(desc(Max_Impact))
+
+# Plot the summary
+ggplot(factor_summary, aes(x = Factors, y = Max_Impact, fill = Factors)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Factors Influencing Women's Mean Income", x = "Factor", y = "Mean Income") +
+  theme_minimal(base_size = 14) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "£"))
+```
+
+The bar chart shows that education level is the most significant factor for women's mean income, with "Master's+" holders earning the most. Age follows as the second key factor. Next, we will compare how these same factors impact men's earnings.
+
+### How do education and age impact men's and women's income differently?
+
+This analysis allows us to see whether factors like career progression, experience, or age-related barriers may contribute to the growing income gap over time.
+
+```{r plot-age-gender-income-trends, message = FALSE, warning = FALSE}
+#| echo: false
+#| include: true
+# Calculate and plot average income by age and gender
+age_gender_income <- the_data |> group_by(Age, Gender) |> summarize(avg_income = mean(Annual_Income, na.rm = TRUE), .groups = "drop")
+
+ggplot(age_gender_income, aes(x = Age, y = avg_income, color = Gender, shape = Gender)) +
+  geom_point() + geom_smooth(method = "lm") +
+  labs(title = "Income Trends by Age and Gender", x = "Age", y = "Average Annual Income", color = "Gender", shape = "Gender") +
+  theme_minimal(base_size = 14) + theme(legend.position = "top") +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "£")) +
+  scale_color_brewer(palette = "Dark2")
+```
+
+The scatter plot shows average income by age for both genders. Women's income generally increases with age, suggesting career growth, while men's income remains relatively stable with slight fluctuations. The difference in the upward slope between the two genders is notable: women have a steeper slope, indicating more significant income growth over time, whereas men have a much flatter slope, reflecting minimal change in income as they age. This highlights a distinct divergence in income progression patterns, suggesting that women experience more pronounced career advancement compared to men.
+
+## **Conclusion**
+
+This analysis is geographically and demographically limited, with missing data and outliers potentially affecting accuracy. While correlations are identified, causality is not established. Findings suggest that women in this population earn more than men, likely due to higher education levels and potentially holding higher-paying roles, although job roles are not detailed in the data. Further research should explore factors behind higher female earnings, barriers for men, and gender-specific income drivers using a more comprehensive data set.
