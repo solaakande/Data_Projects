@@ -28,4 +28,4 @@ I analysed how factors like education, gender, and age relate to income and trie
 Clone the repository and run the analysis in RStudio.
 
 ```bash
-git clone https://github.com/your-username/repo-name.git
+git clone https://github.com/solaakande/Data_Projects.git
